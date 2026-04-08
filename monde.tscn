@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://clcumox054cu2" path="res://Animaux/fox.tscn" id="2_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://caklmi3j4co2y" path="res://Animaux/boar.tscn" id="3_h2yge"]
 [ext_resource type="PackedScene" uid="uid://bm8bpxc06gkgx" path="res://Animaux/deer.tscn" id="4_1bvp3"]
+[ext_resource type="PackedScene" path="res://hud.tscn" id="5_ckny6"]
+[ext_resource type="PackedScene" uid="uid://joueur_pep" path="res://joueur.tscn" id="6_joueur"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_1bvp3"]
 texture = ExtResource("1_ig7tw")
@@ -308,3 +310,8 @@ position = Vector2(92, 42)
 
 [node name="Deer" parent="." unique_id=1270512904 instance=ExtResource("4_1bvp3")]
 position = Vector2(303, 75)
+
+[node name="Joueur" parent="." instance=ExtResource("6_joueur")]
+position = Vector2(320, 180)
+
+[node name="HUD" parent="." unique_id=1226105559 instance=ExtResource("5_ckny6")]

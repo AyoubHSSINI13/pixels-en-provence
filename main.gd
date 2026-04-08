@@ -1,220 +1,297 @@
 extends Control
 
-const BASE_PATH := "res://assets/personnage/mana_seed_demo/char_a_p1/"
-const FRAME := Rect2(0, 256, 64, 64)
+# ─────────────────────────────────────────────────────────────
+#  Écran titre – Pixels en Provence
+#  Fond : ciel provençal (coucher de soleil) + collines + forêt
+# ─────────────────────────────────────────────────────────────
 
-const NB_CARNATIONS := 11
-const NB_COIFFURES := 2
-const NB_COULEURS := 28
-const NB_TENUES := 5
-const NOMS_COIFFURES := ["Bob", "Dreadlocks"]
-const NOMS_TENUES := ["Forestier", "Forestier v2", "Forestier v3", "Forestier v4", "Forestier v5"]
+class _CollinesDraw extends Control:
+	var _rng := RandomNumberGenerator.new()
 
-var carnation := 0
-var coiffure := 0
-var couleur_cheveux := 0
-var tenue := 0
+	func _ready() -> void:
+		resized.connect(queue_redraw)
 
-var sprite_corps: TextureRect
-var sprite_tenue: TextureRect
-var sprite_cheveux: TextureRect
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		if w == 0.0 or h == 0.0:
+			return
 
-var village_input: LineEdit
-var perso_input: LineEdit
-var lbl_carnation: Label
-var lbl_coiffure: Label
-var lbl_couleur: Label
-var lbl_tenue: Label
-var lbl_erreur: Label
+		# Étoiles / lucioles dans le ciel
+		_rng.seed = 137
+		for i in 40:
+			var x := _rng.randf() * w
+			var y := _rng.randf() * h * 0.38
+			var r := _rng.randf_range(0.8, 2.2)
+			var a := _rng.randf_range(0.3, 0.85)
+			draw_circle(Vector2(x, y), r, Color(1.0, 1.0, 0.85, a))
+
+		# Collines arrière (lavande – couleur iconique de Provence)
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(0,         h * 0.60),
+			Vector2(w * 0.10,  h * 0.46),
+			Vector2(w * 0.22,  h * 0.53),
+			Vector2(w * 0.38,  h * 0.41),
+			Vector2(w * 0.52,  h * 0.50),
+			Vector2(w * 0.67,  h * 0.43),
+			Vector2(w * 0.82,  h * 0.51),
+			Vector2(w,         h * 0.46),
+			Vector2(w,         h),
+			Vector2(0,         h),
+		]), Color("#4e3565"))
+
+		# Forêt (silhouette de sapins/pins)
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(0,         h * 0.74),
+			Vector2(w * 0.04,  h * 0.62),
+			Vector2(w * 0.08,  h * 0.68),
+			Vector2(w * 0.13,  h * 0.59),
+			Vector2(w * 0.18,  h * 0.65),
+			Vector2(w * 0.24,  h * 0.57),
+			Vector2(w * 0.29,  h * 0.63),
+			Vector2(w * 0.35,  h * 0.56),
+			Vector2(w * 0.40,  h * 0.62),
+			Vector2(w * 0.46,  h * 0.55),
+			Vector2(w * 0.51,  h * 0.61),
+			Vector2(w * 0.57,  h * 0.54),
+			Vector2(w * 0.62,  h * 0.60),
+			Vector2(w * 0.68,  h * 0.55),
+			Vector2(w * 0.73,  h * 0.61),
+			Vector2(w * 0.79,  h * 0.56),
+			Vector2(w * 0.85,  h * 0.62),
+			Vector2(w * 0.91,  h * 0.57),
+			Vector2(w * 0.96,  h * 0.63),
+			Vector2(w,         h * 0.60),
+			Vector2(w,         h),
+			Vector2(0,         h),
+		]), Color("#183d14"))
+
+		# Prairie avant
+		draw_rect(Rect2(0, h * 0.80, w, h * 0.20), Color("#234f1a"))
+
+		# Reflets chauds sur la prairie
+		draw_rect(Rect2(0, h * 0.80, w, h * 0.04), Color(1.0, 0.6, 0.1, 0.08))
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_construire_fond()
+	_construire_titre()
+	_construire_menu()
 
-	# Fond
-	var bg := ColorRect.new()
-	bg.color = Color(0.12, 0.18, 0.08)
+
+# ── Fond dégradé ──────────────────────────────────────────────
+
+func _construire_fond() -> void:
+	var grad := Gradient.new()
+	# Ciel nuit provençal → coucher de soleil orange → crépuscule → forêt
+	grad.set_color(0,  Color("#0c1835"))
+	grad.set_offset(0, 0.0)
+	grad.set_color(1,  Color("#1e3a18"))
+	grad.set_offset(1, 1.0)
+	grad.add_point(0.38, Color("#c85018"))
+	grad.add_point(0.58, Color("#6b2a14"))
+
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill      = GradientTexture2D.FILL_LINEAR
+	tex.fill_from = Vector2(0.5, 0.0)
+	tex.fill_to   = Vector2(0.5, 1.0)
+	tex.width  = 8
+	tex.height = 256
+
+	var bg := TextureRect.new()
+	bg.texture      = tex
+	bg.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Conteneur principal avec marges
-	var margin := MarginContainer.new()
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_top", 24)
-	margin.add_theme_constant_override("margin_left", 32)
-	margin.add_theme_constant_override("margin_right", 32)
-	margin.add_theme_constant_override("margin_bottom", 24)
-	add_child(margin)
+	var collines := _CollinesDraw.new()
+	collines.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(collines)
 
-	var vbox_main := VBoxContainer.new()
-	vbox_main.add_theme_constant_override("separation", 16)
-	margin.add_child(vbox_main)
+	# Halo solaire (lueur chaude au centre)
+	var halo_tex := GradientTexture2D.new()
+	var halo_grad := Gradient.new()
+	halo_grad.set_color(0, Color(1.0, 0.55, 0.1, 0.18))
+	halo_grad.set_color(1, Color(1.0, 0.55, 0.1, 0.0))
+	halo_grad.set_offset(0, 0.0)
+	halo_grad.set_offset(1, 1.0)
+	halo_tex.gradient = halo_grad
+	halo_tex.fill      = GradientTexture2D.FILL_RADIAL
+	halo_tex.fill_from = Vector2(0.5, 0.5)
+	halo_tex.fill_to   = Vector2(1.0, 0.5)
+	halo_tex.width  = 256
+	halo_tex.height = 256
 
-	# Titre
+	var halo := TextureRect.new()
+	halo.texture      = halo_tex
+	halo.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	halo.stretch_mode = TextureRect.STRETCH_SCALE
+	halo.set_anchor(SIDE_LEFT,   0.0)
+	halo.set_anchor(SIDE_RIGHT,  1.0)
+	halo.set_anchor(SIDE_TOP,    0.25)
+	halo.set_anchor(SIDE_BOTTOM, 0.60)
+	add_child(halo)
+
+
+# ── Titre ─────────────────────────────────────────────────────
+
+func _construire_titre() -> void:
+	var font_titre := _charger_font("res://assets/fonts/ManaSeedTitle.ttf")
+
+	# Bande semi-transparente derrière le titre
+	var bande := Panel.new()
+	var style_bande := StyleBoxFlat.new()
+	style_bande.bg_color = Color(0.0, 0.0, 0.0, 0.38)
+	style_bande.border_color = Color("#c8922a")
+	style_bande.border_width_top    = 2
+	style_bande.border_width_bottom = 2
+	bande.add_theme_stylebox_override("panel", style_bande)
+	bande.set_anchor(SIDE_LEFT,   0.0)
+	bande.set_anchor(SIDE_RIGHT,  1.0)
+	bande.set_anchor(SIDE_TOP,    0.0)
+	bande.set_anchor(SIDE_BOTTOM, 0.0)
+	bande.offset_top    = 58
+	bande.offset_bottom = 190
+	add_child(bande)
+
+	# Titre principal
 	var titre := Label.new()
-	titre.text = "~ Pixels en Provence ~"
+	titre.text = "Pixels en Provence"
 	titre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox_main.add_child(titre)
+	titre.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	titre.offset_top    = 68
+	titre.offset_bottom = 152
+	if font_titre:
+		titre.add_theme_font_override("font", font_titre)
+	titre.add_theme_font_size_override("font_size", 58)
+	titre.add_theme_color_override("font_color",        Color("#ffecd2"))
+	titre.add_theme_color_override("font_shadow_color", Color("#1e0800"))
+	titre.add_theme_constant_override("shadow_offset_x",   3)
+	titre.add_theme_constant_override("shadow_offset_y",   4)
+	titre.add_theme_constant_override("shadow_outline_size", 2)
+	add_child(titre)
 
-	var sep_titre := HSeparator.new()
-	vbox_main.add_child(sep_titre)
+	# Sous-titre
+	var sous := Label.new()
+	sous.text = "~ Un monde de nature et d'aventure ~"
+	sous.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	sous.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	sous.offset_top    = 152
+	sous.offset_bottom = 188
+	if font_titre:
+		sous.add_theme_font_override("font", font_titre)
+	sous.add_theme_font_size_override("font_size", 17)
+	sous.add_theme_color_override("font_color", Color("#f0b840"))
+	add_child(sous)
 
-	# Corps principal
-	var hbox := HBoxContainer.new()
-	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	hbox.add_theme_constant_override("separation", 32)
-	vbox_main.add_child(hbox)
 
-	# ── Aperçu personnage ──
-	var preview_panel := Panel.new()
-	preview_panel.custom_minimum_size = Vector2(180, 280)
-	hbox.add_child(preview_panel)
+# ── Menu principal ────────────────────────────────────────────
 
-	for nom in ["corps", "tenue", "cheveux"]:
-		var tr := TextureRect.new()
-		tr.name = nom
-		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		tr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		preview_panel.add_child(tr)
+func _construire_menu() -> void:
+	var font_body  := _charger_font("res://assets/fonts/ManaSeedBody.ttf")
+	var a_save     := GameData.sauvegarde_existe()
 
-	sprite_corps   = preview_panel.get_node("corps")
-	sprite_tenue   = preview_panel.get_node("tenue")
-	sprite_cheveux = preview_panel.get_node("cheveux")
+	var boutons := [
+		["Nouvelle Partie", _on_nouvelle_partie, true],
+		["Continuer",       _on_continuer,       a_save],
+		["Quitter",         _on_quitter,         true],
+	]
 
-	# ── Formulaire ──
-	var form := VBoxContainer.new()
-	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	form.add_theme_constant_override("separation", 8)
-	hbox.add_child(form)
+	var menu := VBoxContainer.new()
+	menu.add_theme_constant_override("separation", 18)
+	menu.set_anchor(SIDE_LEFT,   0.5)
+	menu.set_anchor(SIDE_RIGHT,  0.5)
+	menu.set_anchor(SIDE_TOP,    0.5)
+	menu.set_anchor(SIDE_BOTTOM, 0.5)
+	menu.offset_left   = -170
+	menu.offset_right  =  170
+	menu.offset_top    =   20
+	menu.offset_bottom =  210
+	add_child(menu)
 
-	_label(form, "Nom du village / forêt")
-	village_input = LineEdit.new()
-	village_input.placeholder_text = "Ex : La Forêt des Maules"
-	form.add_child(village_input)
+	for data in boutons:
+		var btn := _creer_bouton(data[0], font_body)
+		btn.disabled = not data[2]
+		btn.pressed.connect(data[1])
+		menu.add_child(btn)
 
-	_label(form, "Nom du personnage")
-	perso_input = LineEdit.new()
-	perso_input.placeholder_text = "Ex : Camille"
-	form.add_child(perso_input)
+	# Version
+	var version := Label.new()
+	version.text = "v0.1 – alpha"
+	version.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	version.offset_left = -130
+	version.offset_top  = -28
+	version.add_theme_color_override("font_color", Color(1, 1, 1, 0.30))
+	if font_body:
+		version.add_theme_font_override("font", font_body)
+	version.add_theme_font_size_override("font_size", 13)
+	add_child(version)
 
-	var sep := HSeparator.new()
-	form.add_child(sep)
 
-	_label(form, "Apparence du personnage")
+# ── Helpers ───────────────────────────────────────────────────
 
-	lbl_carnation = _selector(form, _on_carnation.bind(-1), _on_carnation.bind(1))
-	lbl_coiffure  = _selector(form, _on_coiffure.bind(-1),  _on_coiffure.bind(1))
-	lbl_couleur   = _selector(form, _on_couleur.bind(-1),   _on_couleur.bind(1))
-	lbl_tenue     = _selector(form, _on_tenue.bind(-1),     _on_tenue.bind(1))
-
-	# Spacer + erreur + bouton
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	form.add_child(spacer)
-
-	lbl_erreur = Label.new()
-	lbl_erreur.text = ""
-	lbl_erreur.modulate = Color.RED
-	lbl_erreur.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	form.add_child(lbl_erreur)
-
+func _creer_bouton(texte: String, font: Font) -> Button:
 	var btn := Button.new()
-	btn.text = "Commencer l'aventure"
-	btn.pressed.connect(_on_commencer)
-	form.add_child(btn)
+	btn.text = texte
+	btn.custom_minimum_size = Vector2(340, 56)
+	btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	_update_preview()
+	if font:
+		btn.add_theme_font_override("font", font)
+	btn.add_theme_font_size_override("font_size", 22)
 
+	btn.add_theme_stylebox_override("normal",   _style_btn(Color("#5c2e0e"), Color("#c8922a")))
+	btn.add_theme_stylebox_override("hover",    _style_btn(Color("#7d3e14"), Color("#e8b040")))
+	btn.add_theme_stylebox_override("pressed",  _style_btn(Color("#3a1c06"), Color("#a07020")))
+	btn.add_theme_stylebox_override("disabled", _style_btn(Color("#222222"), Color("#444444")))
+	btn.add_theme_stylebox_override("focus",    _style_btn(Color("#7d3e14"), Color("#e8b040")))
 
-# ── Helpers UI ────────────────────────────────────────────
+	btn.add_theme_color_override("font_color",          Color("#ffecd2"))
+	btn.add_theme_color_override("font_hover_color",    Color("#ffffff"))
+	btn.add_theme_color_override("font_pressed_color",  Color("#ffc060"))
+	btn.add_theme_color_override("font_disabled_color", Color("#505050"))
 
-func _label(parent: Control, text: String) -> void:
-	var lbl := Label.new()
-	lbl.text = text
-	parent.add_child(lbl)
-
-
-func _selector(parent: Control, cb_prev: Callable, cb_next: Callable) -> Label:
-	var hbox := HBoxContainer.new()
-	parent.add_child(hbox)
-
-	var btn_p := Button.new()
-	btn_p.text = "<"
-	btn_p.pressed.connect(cb_prev)
-	hbox.add_child(btn_p)
-
-	var lbl := Label.new()
-	lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hbox.add_child(lbl)
-
-	var btn_n := Button.new()
-	btn_n.text = ">"
-	btn_n.pressed.connect(cb_next)
-	hbox.add_child(btn_n)
-
-	return lbl
+	return btn
 
 
-# ── Mise à jour de l'aperçu ───────────────────────────────
-
-func _update_preview() -> void:
-	sprite_corps.texture   = _atlas("%schar_a_p1_0bas_humn_v%02d.png" % [BASE_PATH, carnation])
-	sprite_tenue.texture   = _atlas("%s1out/char_a_p1_1out_fstr_v%02d.png" % [BASE_PATH, tenue + 1])
-	sprite_cheveux.texture = _atlas("%s4har/char_a_p1_4har_%s_v%02d.png" % [
-		BASE_PATH,
-		["bob1", "dap1"][coiffure],
-		couleur_cheveux
-	])
-
-	lbl_carnation.text = "Carnation  %d / %d" % [carnation + 1, NB_CARNATIONS]
-	lbl_coiffure.text  = "Coiffure   %s" % NOMS_COIFFURES[coiffure]
-	lbl_couleur.text   = "Couleur cheveux  %d / %d" % [couleur_cheveux + 1, NB_COULEURS]
-	lbl_tenue.text     = "Tenue  %d / %d" % [tenue + 1, NB_TENUES]
-
-
-func _atlas(path: String) -> AtlasTexture:
-	var a := AtlasTexture.new()
-	a.atlas = load(path)
-	a.region = FRAME
-	return a
+func _style_btn(bg: Color, border: Color) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color     = bg
+	s.border_color = border
+	s.border_width_left   = 2
+	s.border_width_right  = 2
+	s.border_width_top    = 2
+	s.border_width_bottom = 2
+	s.corner_radius_top_left     = 5
+	s.corner_radius_top_right    = 5
+	s.corner_radius_bottom_left  = 5
+	s.corner_radius_bottom_right = 5
+	s.content_margin_left   = 16
+	s.content_margin_right  = 16
+	s.content_margin_top    = 8
+	s.content_margin_bottom = 8
+	return s
 
 
-# ── Callbacks sélecteurs ─────────────────────────────────
-
-func _on_carnation(dir: int) -> void:
-	carnation = (carnation + dir + NB_CARNATIONS) % NB_CARNATIONS
-	_update_preview()
-
-func _on_coiffure(dir: int) -> void:
-	coiffure = (coiffure + dir + NB_COIFFURES) % NB_COIFFURES
-	_update_preview()
-
-func _on_couleur(dir: int) -> void:
-	couleur_cheveux = (couleur_cheveux + dir + NB_COULEURS) % NB_COULEURS
-	_update_preview()
-
-func _on_tenue(dir: int) -> void:
-	tenue = (tenue + dir + NB_TENUES) % NB_TENUES
-	_update_preview()
+func _charger_font(path: String) -> Font:
+	if ResourceLoader.exists(path):
+		return load(path)
+	return null
 
 
-# ── Validation et lancement ──────────────────────────────
+# ── Actions ───────────────────────────────────────────────────
 
-func _on_commencer() -> void:
-	if village_input.text.strip_edges() == "":
-		lbl_erreur.text = "Donne un nom à ton village !"
-		return
-	if perso_input.text.strip_edges() == "":
-		lbl_erreur.text = "Donne un nom à ton personnage !"
-		return
+func _on_nouvelle_partie() -> void:
+	get_tree().change_scene_to_file("res://creation_perso.tscn")
 
-	GameData.nom_village     = village_input.text.strip_edges()
-	GameData.nom_joueur      = perso_input.text.strip_edges()
-	GameData.carnation       = carnation
-	GameData.coiffure        = coiffure
-	GameData.couleur_cheveux = couleur_cheveux
-	GameData.tenue           = tenue
 
+func _on_continuer() -> void:
+	GameData.charger()
 	get_tree().change_scene_to_file("res://monde.tscn")
+
+
+func _on_quitter() -> void:
+	get_tree().quit()

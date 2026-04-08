@@ -26,7 +26,15 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+	if not (event is InputEventMouseButton and event.pressed):
+		return
+	if event.button_index == MOUSE_BUTTON_RIGHT:
+		if Fox.selected_animal:
+			Fox.selected_animal.is_selected = false
+			Fox.selected_animal.modulate    = Color.WHITE
+			Fox.selected_animal             = null
+			get_viewport().set_input_as_handled()
+	elif event.button_index == MOUSE_BUTTON_LEFT:
 		if is_selected:
 			move_to(get_global_mouse_position())
 

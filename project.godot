@@ -19,6 +19,10 @@ run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GameData="*res://game_data.gd"
+
 [display]
 
 window/size/viewport_width=1280
@@ -28,10 +32,6 @@ window/stretch/mode="canvas_items"
 [physics]
 
 3d/physics_engine="Jolt Physics"
-
-[autoload]
-
-GameData="*res://game_data.gd"
 
 [rendering]
 

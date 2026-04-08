@@ -350,17 +350,20 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_5v2dv"]
+radius = 8.0
+height = 20.0
 
 [node name="Boar" type="CharacterBody2D" unique_id=806238085]
 script = ExtResource("1_bgfw4")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1830279184]
+position = Vector2(0, 0.5)
+scale = Vector2(1, 0.96875)
 sprite_frames = SubResource("SpriteFrames_v58y8")
-animation = &"attack"
-frame = 6
-frame_progress = 1.0
+animation = &"walk up"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=850744729]
+position = Vector2(0, 1)
 shape = SubResource("CapsuleShape2D_5v2dv")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1249364915]
