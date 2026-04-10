@@ -1,13 +1,13 @@
-[gd_scene format=4 uid="uid://joueur_pep"]
+[gd_scene format=3 uid="uid://xnd7uul055l5"]
 
-[ext_resource type="Script" path="res://joueur.gd" id="1"]
+[ext_resource type="Script" uid="uid://cypdywipsylga" path="res://joueur.gd" id="1"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_1"]
 radius = 8.0
 
-[node name="Joueur" type="CharacterBody2D"]
+[node name="Joueur" type="CharacterBody2D" unique_id=1111308722]
 script = ExtResource("1")
 
-[node name="Collision" type="CollisionShape2D" parent="."]
+[node name="Collision" type="CollisionShape2D" parent="." unique_id=250901887]
 position = Vector2(0, 10)
 shape = SubResource("CircleShape2D_1")

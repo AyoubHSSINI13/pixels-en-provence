@@ -82,60 +82,29 @@ func _ready() -> void:
 
 # ── Fond dégradé ──────────────────────────────────────────────
 
+# ── Fond Image (Remplace le dégradé) ──────────────────────────
+
 func _construire_fond() -> void:
-	var grad := Gradient.new()
-	# Ciel nuit provençal → coucher de soleil orange → crépuscule → forêt
-	grad.set_color(0,  Color("#0c1835"))
-	grad.set_offset(0, 0.0)
-	grad.set_color(1,  Color("#1e3a18"))
-	grad.set_offset(1, 1.0)
-	grad.add_point(0.38, Color("#c85018"))
-	grad.add_point(0.58, Color("#6b2a14"))
-
-	var tex := GradientTexture2D.new()
-	tex.gradient = grad
-	tex.fill      = GradientTexture2D.FILL_LINEAR
-	tex.fill_from = Vector2(0.5, 0.0)
-	tex.fill_to   = Vector2(0.5, 1.0)
-	tex.width  = 8
-	tex.height = 256
-
+	# 1. Création du conteneur pour l'image
 	var bg := TextureRect.new()
-	bg.texture      = tex
-	bg.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	
+	# 2. Chargement de ton image
+	var texture_image = load("res://assets/fonts/ecranAcceuil.png")
+	
+	if texture_image:
+		bg.texture = texture_image
+		# On s'assure que l'image couvre tout l'écran proprement
+		bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
+	else:
+		push_error("Impossible de charger l'image : res://assets/fonts/encranAcceuil.png")
 
-	var collines := _CollinesDraw.new()
-	collines.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(collines)
-
-	# Halo solaire (lueur chaude au centre)
-	var halo_tex := GradientTexture2D.new()
-	var halo_grad := Gradient.new()
-	halo_grad.set_color(0, Color(1.0, 0.55, 0.1, 0.18))
-	halo_grad.set_color(1, Color(1.0, 0.55, 0.1, 0.0))
-	halo_grad.set_offset(0, 0.0)
-	halo_grad.set_offset(1, 1.0)
-	halo_tex.gradient = halo_grad
-	halo_tex.fill      = GradientTexture2D.FILL_RADIAL
-	halo_tex.fill_from = Vector2(0.5, 0.5)
-	halo_tex.fill_to   = Vector2(1.0, 0.5)
-	halo_tex.width  = 256
-	halo_tex.height = 256
-
-	var halo := TextureRect.new()
-	halo.texture      = halo_tex
-	halo.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
-	halo.stretch_mode = TextureRect.STRETCH_SCALE
-	halo.set_anchor(SIDE_LEFT,   0.0)
-	halo.set_anchor(SIDE_RIGHT,  1.0)
-	halo.set_anchor(SIDE_TOP,    0.25)
-	halo.set_anchor(SIDE_BOTTOM, 0.60)
-	add_child(halo)
-
-
+	# OPTIONNEL : Si tu veux garder tes collines dessinées PAR-DESSUS l'image :
+	# var collines := _CollinesDraw.new()
+	# collines.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# add_child(collines)
 # ── Titre ─────────────────────────────────────────────────────
 
 func _construire_titre() -> void:
