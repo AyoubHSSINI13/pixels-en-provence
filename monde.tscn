@@ -324,7 +324,7 @@ animations = [{
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_d6m2i"]
 custom_solver_bias = 0.697
-points = PackedVector2Array(-91, 64, 8, 63, 48, 33, 27, 5, 25, -20, -9, -47, -78, -32, -103, 3, -142, 22, -127, 48)
+points = PackedVector2Array(-40, 72, 8, 64, 32, 40, 32, 8, 16, -16, -24, -48, -40, -48, -72, -40, -96, -32, -120, -16, -136, 0, -152, 8, -168, 24, -168, 40, -152, 56, -128, 64, -104, 72)
 
 [node name="Main" type="Node2D" unique_id=498817877]
 script = ExtResource("1_monde")
@@ -357,14 +357,24 @@ frame_progress = 0.1286865
 
 [node name="Maison" type="StaticBody2D" parent="." unique_id=1810590224]
 position = Vector2(99, 74)
+disable_mode = 1
 
-[node name="Sprite2D" type="Sprite2D" parent="Maison" unique_id=1002780843]
-position = Vector2(1434, 507)
+[node name="Maison1" type="Sprite2D" parent="Maison" unique_id=1002780843]
+z_index = 465
+position = Vector2(1485, 382)
+scale = Vector2(1.0133333, 1.0166667)
 texture = ExtResource("9_6xmj5")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Maison" unique_id=1006225204]
-position = Vector2(1480, 559)
+[node name="Lantern-mask" type="Sprite2D" parent="Maison" unique_id=1332794163]
+z_index = 4096
+position = Vector2(1405, 382)
+scale = Vector2(1.0133333, 1.0166667)
+texture = ExtResource("9_6xmj5")
+region_enabled = true
+region_rect = Rect2(60.430054, 140.33434, 22.236633, 26.67427)
+
+[node name="CollisionMaison1" type="CollisionShape2D" parent="Maison" unique_id=1006225204]
+z_index = 460
+position = Vector2(1541, 430)
 shape = SubResource("ConvexPolygonShape2D_d6m2i")
-disabled = true
-one_way_collision = true
 one_way_collision_margin = 0.0
