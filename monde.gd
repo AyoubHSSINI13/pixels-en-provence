@@ -7,19 +7,28 @@ const TILE := 16
 const CLIFF_TILES := [Vector2i(1,1), Vector2i(2,1)]
 const WATER_TILES := [Vector2i(1,9), Vector2i(2,9), Vector2i(4,9)]
 
-var _atlas_source: TileSetAtlasSource
-
 # Palettes selon l'heure
 const PALETTE_JOUR  := "res://assets/tilemap/gentle_forest/gentle_forest.png"       # v01
 const PALETTE_SOIR  := "res://assets/tilemap/gentle_forest/gentle_forest_v02.png"   # v02
 const PALETTE_NUIT  := "res://assets/tilemap/gentle_forest/gentle_forest_v03.png"   # v03
 
+const WATERFALL_JOUR := "res://assets/tilemap/gentle_forest/waterfall_v01.png"
+const WATERFALL_SOIR := "res://assets/tilemap/gentle_forest/waterfall_v02.png"
+const WATERFALL_NUIT := "res://assets/tilemap/gentle_forest/waterfall_v03.png"
+
+var _atlas_sources: Array[TileSetAtlasSource] = []
 var _current_palette := ""
 
 
 func _ready() -> void:
-	_atlas_source = $sol.tile_set.get_source(0) as TileSetAtlasSource
-	_build_water_overlay()
+	# Récupère toutes les atlas sources gentle_forest de tous les TileMapLayers
+	for child in get_children():
+		if child is TileMapLayer and child.tile_set:
+			var ts: TileSet = child.tile_set
+			for i in ts.get_source_count():
+				var src := ts.get_source(ts.get_source_id(i)) as TileSetAtlasSource
+				if src:
+					_atlas_sources.append(src)
 	if Engine.is_editor_hint():
 		return
 	_build_collision()
@@ -35,17 +44,28 @@ func _process(_delta: float) -> void:
 
 func _apply_palette_for_hour(h: float) -> void:
 	var palette: String
+	var waterfall: String
 	if h >= 6.0 and h < 17.0:
-		palette = PALETTE_JOUR       # 6h - 17h : jour
+		palette = PALETTE_JOUR
+		waterfall = WATERFALL_JOUR
 	elif h >= 17.0 and h < 21.0:
-		palette = PALETTE_SOIR       # 17h - 21h : fin d'aprem / coucher
+		palette = PALETTE_SOIR
+		waterfall = WATERFALL_SOIR
 	else:
-		palette = PALETTE_NUIT       # 21h - 6h : nuit
+		palette = PALETTE_NUIT
+		waterfall = WATERFALL_NUIT
 
 	if palette == _current_palette:
 		return
 	_current_palette = palette
-	_atlas_source.texture = load(palette)
+	var tex_palette: Texture2D = load(palette)
+	var tex_waterfall: Texture2D = load(waterfall)
+	for src in _atlas_sources:
+		var path := src.texture.resource_path
+		if "gentle_forest" in path:
+			src.texture = tex_palette
+		elif "waterfall" in path:
+			src.texture = tex_waterfall
 
 
 func _is_blocking(cell: Vector2i) -> bool:
@@ -56,19 +76,6 @@ func _is_blocking(cell: Vector2i) -> bool:
 func _is_water(cell: Vector2i) -> bool:
 	var coords := ($sol as TileMapLayer).get_cell_atlas_coords(cell)
 	return coords in WATER_TILES
-
-
-# =================================================================
-# OVERLAY EAU — sparkles animes sur le lac
-# =================================================================
-func _build_water_overlay() -> void:
-	var old := get_node_or_null("WaterOverlay")
-	if old:
-		old.queue_free()
-	var root := Node2D.new()
-	root.name = "WaterOverlay"
-	root.z_index = 1
-	add_child(root)
 
 
 # =================================================================
