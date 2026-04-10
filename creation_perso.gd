@@ -429,8 +429,8 @@ func _update_preview() -> void:
 		"%schar_a_p1_0bas_humn_v%02d.png" % [BASE_PATH, carnation])
 
 	# Tenue
-	var t := TENUES[tenue_type]
-	var t_var := (tenue_var % t.variantes) + 1 if t.variantes > 0 else 1
+	var t: Dictionary = TENUES[tenue_type]
+	var t_var: int = (tenue_var % t.variantes) + 1 if t.variantes > 0 else 1
 	sprite_tenue.texture = _atlas_tex(
 		"%s1out/char_a_p1_1out_%s_v%02d.png" % [BASE_PATH, t.id, t_var])
 
@@ -439,11 +439,11 @@ func _update_preview() -> void:
 		"%s4har/char_a_p1_4har_%s_v%02d.png" % [BASE_PATH, COIFFURES[coiffure], couleur_cheveux])
 
 	# Chapeau
-	var ch := CHAPEAUX[chapeau_type]
+	var ch: Dictionary = CHAPEAUX[chapeau_type]
 	if ch.id == "":
 		sprite_chapeau.texture = null
 	else:
-		var ch_var := (chapeau_var % ch.variantes) + 1 if ch.variantes > 0 else 1
+		var ch_var: int = (chapeau_var % ch.variantes) + 1 if ch.variantes > 0 else 1
 		sprite_chapeau.texture = _atlas_tex(
 			"%s5hat/char_a_p1_5hat_%s_v%02d.png" % [BASE_PATH, ch.id, ch_var])
 
