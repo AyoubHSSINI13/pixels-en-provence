@@ -9,20 +9,39 @@ const BASE_PATH := "res://assets/personnage/mana_seed_demo/char_a_p1/"
 const FRAME := Rect2(0, 256, 64, 64)
 
 const NB_CARNATIONS  := 11
-const NB_COIFFURES   := 2
-const NB_COULEURS    := 28
-const NB_TENUES      := 5
+const NB_COULEURS    := 14   # v00 à v13
+
+# Coiffures disponibles dans le pack
+const COIFFURES := ["bob1", "dap1"]
 const NOMS_COIFFURES := ["Bob", "Dreadlocks"]
-const NOMS_TENUES    := ["Forestier", "Forestier v2", "Forestier v3", "Forestier v4", "Forestier v5"]
+
+# Tenues disponibles (type + nb variantes)
+const TENUES := [
+	{"id": "fstr", "nom": "Forestier",  "variantes": 5},
+	{"id": "pfpn", "nom": "Paysan",     "variantes": 5},
+	{"id": "boxr", "nom": "Boxeur",     "variantes": 1},
+	{"id": "undi", "nom": "Sous-vêtements", "variantes": 1},
+]
+
+# Chapeaux disponibles
+const CHAPEAUX := [
+	{"id": "",     "nom": "Aucun",      "variantes": 0},
+	{"id": "pfht", "nom": "Chapeau paysan", "variantes": 5},
+	{"id": "pnty", "nom": "Bandana",    "variantes": 5},
+]
 
 var carnation       := 0
 var coiffure        := 0
 var couleur_cheveux := 0
-var tenue           := 0
+var tenue_type      := 0
+var tenue_var       := 0
+var chapeau_type    := 0
+var chapeau_var     := 0
 
 var sprite_corps:   TextureRect
 var sprite_tenue:   TextureRect
 var sprite_cheveux: TextureRect
+var sprite_chapeau: TextureRect
 
 var village_input: LineEdit
 var perso_input:   LineEdit
@@ -30,6 +49,7 @@ var lbl_carnation: Label
 var lbl_coiffure:  Label
 var lbl_couleur:   Label
 var lbl_tenue:     Label
+var lbl_chapeau:   Label
 var lbl_erreur:    Label
 
 
@@ -120,10 +140,9 @@ func _construire_fond() -> void:
 # ── Carte centrée ─────────────────────────────────────────────
 
 func _construire_carte(font_titre: Font, font_body: Font) -> void:
-	# Carte principale (centrée, 870×510)
 	var carte := Panel.new()
 	var s_carte := StyleBoxFlat.new()
-	s_carte.bg_color     = Color("#0d1a08e8")  # vert très sombre, quasi opaque
+	s_carte.bg_color     = Color("#0d1a08e8")
 	s_carte.border_color = Color("#c8922a")
 	s_carte.border_width_left   = 2
 	s_carte.border_width_right  = 2
@@ -136,15 +155,15 @@ func _construire_carte(font_titre: Font, font_body: Font) -> void:
 	s_carte.shadow_color = Color(0, 0, 0, 0.6)
 	s_carte.shadow_size  = 12
 	carte.add_theme_stylebox_override("panel", s_carte)
-	carte.custom_minimum_size = Vector2(870, 510)
+	carte.custom_minimum_size = Vector2(870, 560)
 	carte.set_anchor(SIDE_LEFT,   0.5)
 	carte.set_anchor(SIDE_RIGHT,  0.5)
 	carte.set_anchor(SIDE_TOP,    0.5)
 	carte.set_anchor(SIDE_BOTTOM, 0.5)
 	carte.offset_left   = -435
 	carte.offset_right  =  435
-	carte.offset_top    = -255
-	carte.offset_bottom =  255
+	carte.offset_top    = -280
+	carte.offset_bottom =  280
 	add_child(carte)
 
 	# Barre de titre de la carte
@@ -219,7 +238,7 @@ func _construire_preview(parent: Control) -> void:
 	preview.add_theme_stylebox_override("panel", s)
 	col.add_child(preview)
 
-	for nom in ["corps", "tenue", "cheveux"]:
+	for nom in ["corps", "tenue", "cheveux", "chapeau"]:
 		var tex_rect := TextureRect.new()
 		tex_rect.name         = nom
 		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -230,6 +249,7 @@ func _construire_preview(parent: Control) -> void:
 	sprite_corps   = preview.get_node("corps")
 	sprite_tenue   = preview.get_node("tenue")
 	sprite_cheveux = preview.get_node("cheveux")
+	sprite_chapeau = preview.get_node("chapeau")
 
 
 # ── Formulaire (colonne droite) ───────────────────────────────
@@ -237,7 +257,7 @@ func _construire_preview(parent: Control) -> void:
 func _construire_form(parent: Control, font: Font) -> void:
 	var form := VBoxContainer.new()
 	form.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	form.add_theme_constant_override("separation", 8)
+	form.add_theme_constant_override("separation", 6)
 	parent.add_child(form)
 
 	# Noms
@@ -259,6 +279,7 @@ func _construire_form(parent: Control, font: Font) -> void:
 	lbl_coiffure  = _selector(form, _on_coiffure.bind(-1),  _on_coiffure.bind(1),  font)
 	lbl_couleur   = _selector(form, _on_couleur.bind(-1),   _on_couleur.bind(1),   font)
 	lbl_tenue     = _selector(form, _on_tenue.bind(-1),     _on_tenue.bind(1),     font)
+	lbl_chapeau   = _selector(form, _on_chapeau.bind(-1),   _on_chapeau.bind(1),   font)
 
 	var spacer := Control.new()
 	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -403,18 +424,43 @@ func _charger_font(path: String) -> Font:
 # ── Aperçu ────────────────────────────────────────────────────
 
 func _update_preview() -> void:
-	sprite_corps.texture   = _atlas("%schar_a_p1_0bas_humn_v%02d.png" % [BASE_PATH, carnation])
-	sprite_tenue.texture   = _atlas("%s1out/char_a_p1_1out_fstr_v%02d.png" % [BASE_PATH, tenue + 1])
-	sprite_cheveux.texture = _atlas("%s4har/char_a_p1_4har_%s_v%02d.png" % [
-		BASE_PATH, ["bob1", "dap1"][coiffure], couleur_cheveux
-	])
+	# Corps
+	sprite_corps.texture = _atlas_tex(
+		"%schar_a_p1_0bas_humn_v%02d.png" % [BASE_PATH, carnation])
+
+	# Tenue
+	var t := TENUES[tenue_type]
+	var t_var := (tenue_var % t.variantes) + 1 if t.variantes > 0 else 1
+	sprite_tenue.texture = _atlas_tex(
+		"%s1out/char_a_p1_1out_%s_v%02d.png" % [BASE_PATH, t.id, t_var])
+
+	# Cheveux
+	sprite_cheveux.texture = _atlas_tex(
+		"%s4har/char_a_p1_4har_%s_v%02d.png" % [BASE_PATH, COIFFURES[coiffure], couleur_cheveux])
+
+	# Chapeau
+	var ch := CHAPEAUX[chapeau_type]
+	if ch.id == "":
+		sprite_chapeau.texture = null
+	else:
+		var ch_var := (chapeau_var % ch.variantes) + 1 if ch.variantes > 0 else 1
+		sprite_chapeau.texture = _atlas_tex(
+			"%s5hat/char_a_p1_5hat_%s_v%02d.png" % [BASE_PATH, ch.id, ch_var])
+
+	# Labels
 	lbl_carnation.text = "Carnation   %d / %d"  % [carnation + 1, NB_CARNATIONS]
 	lbl_coiffure.text  = "Coiffure    %s"        % NOMS_COIFFURES[coiffure]
 	lbl_couleur.text   = "Couleur     %d / %d"   % [couleur_cheveux + 1, NB_COULEURS]
-	lbl_tenue.text     = "Tenue       %s"        % NOMS_TENUES[tenue]
+	lbl_tenue.text     = "Tenue       %s %d"     % [t.nom, t_var] if t.variantes > 1 else "Tenue       %s" % t.nom
+	if ch.id == "":
+		lbl_chapeau.text = "Chapeau     Aucun"
+	else:
+		lbl_chapeau.text = "Chapeau     %s %d" % [ch.nom, (chapeau_var % ch.variantes) + 1] if ch.variantes > 1 else "Chapeau     %s" % ch.nom
 
 
-func _atlas(path: String) -> AtlasTexture:
+func _atlas_tex(path: String) -> AtlasTexture:
+	if not ResourceLoader.exists(path):
+		return null
 	var a := AtlasTexture.new()
 	a.atlas  = load(path)
 	a.region = FRAME
@@ -428,7 +474,7 @@ func _on_carnation(dir: int) -> void:
 	_update_preview()
 
 func _on_coiffure(dir: int) -> void:
-	coiffure = (coiffure + dir + NB_COIFFURES) % NB_COIFFURES
+	coiffure = (coiffure + dir + COIFFURES.size()) % COIFFURES.size()
 	_update_preview()
 
 func _on_couleur(dir: int) -> void:
@@ -436,7 +482,14 @@ func _on_couleur(dir: int) -> void:
 	_update_preview()
 
 func _on_tenue(dir: int) -> void:
-	tenue = (tenue + dir + NB_TENUES) % NB_TENUES
+	# Change le type de tenue, remet la variante à 0
+	tenue_type = (tenue_type + dir + TENUES.size()) % TENUES.size()
+	tenue_var = 0
+	_update_preview()
+
+func _on_chapeau(dir: int) -> void:
+	chapeau_type = (chapeau_type + dir + CHAPEAUX.size()) % CHAPEAUX.size()
+	chapeau_var = 0
 	_update_preview()
 
 
@@ -453,7 +506,7 @@ func _on_commencer() -> void:
 	GameData.carnation       = carnation
 	GameData.coiffure        = coiffure
 	GameData.couleur_cheveux = couleur_cheveux
-	GameData.tenue           = tenue
+	GameData.tenue           = tenue_type * 100 + tenue_var  # encode type+var
 
 	GameData.sauvegarder()
 	get_tree().change_scene_to_file("res://monde.tscn")
