@@ -6,6 +6,26 @@ const TILE := 16
 # --- Atlas coords des tuiles bloquantes (dans gentle_forest.png) ---
 const CLIFF_TILES := [Vector2i(1,1), Vector2i(2,1)]
 const WATER_TILES := [Vector2i(1,9), Vector2i(2,9), Vector2i(4,9)]
+const HERBE_TILES := [
+	Vector2i(1, 5), Vector2i(2, 5),
+	Vector2i(1, 6), Vector2i(2, 6)
+]
+@export var uniformiser_herbe_btn := false:
+	set(_v):
+		if not Engine.is_editor_hint():
+			return
+		var sol := $sol as TileMapLayer
+		if not sol:
+			return
+		for cell in sol.get_used_cells():
+			var coords := sol.get_cell_atlas_coords(cell)
+			if coords in CLIFF_TILES:
+				continue
+			var ix := posmod(cell.x, 2)
+			var iy := posmod(cell.y, 2)
+			sol.set_cell(cell, 0, HERBE_TILES[iy * 2 + ix])
+		print("✅ Herbe uniformisée !")
+
 
 # Palettes selon l'heure
 const PALETTE_JOUR  := "res://assets/tilemap/gentle_forest/gentle_forest.png"       # v01
