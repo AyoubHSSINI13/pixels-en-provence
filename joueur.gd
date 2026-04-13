@@ -32,6 +32,11 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	if GameData.inventaire_ouvert:
+		velocity = Vector2.ZERO
+		move_and_slide()
+		return
+
 	# Support fleches + ZQSD (AZERTY)
 	var ix := 0.0
 	var iy := 0.0

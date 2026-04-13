@@ -2,36 +2,89 @@ extends Node
 
 const SAVE_PATH := "user://save.json"
 
+# ── Définition des objets ──────────────────────────────────────
+const ITEMS := {
+	"bois":   {"nom": "Bois",   "col": Color("#c87830"), "stackable": true,  "max_stack": 64},
+	"pierre": {"nom": "Pierre", "col": Color("#9a9a9a"), "stackable": true,  "max_stack": 64},
+	"herbes": {"nom": "Herbes", "col": Color("#50c040"), "stackable": true,  "max_stack": 64},
+	"baies":  {"nom": "Baies",  "col": Color("#d040d0"), "stackable": true,  "max_stack": 64},
+	"eau":    {"nom": "Eau",    "col": Color("#30a0f0"), "stackable": true,  "max_stack": 64},
+	"viande": {"nom": "Viande", "col": Color("#e04040"), "stackable": true,  "max_stack": 64},
+}
+
+const TAILLE_HOTBAR := 9
+const TAILLE_INV    := 27   # 3 lignes × 9 colonnes
+
 # ── Identité ──────────────────────────────────────────────────
-var nom_village      := ""
-var nom_joueur       := ""
-var carnation        := 0
-var coiffure         := 0
-var couleur_cheveux  := 0
-var tenue            := 0
+var nom_village     := ""
+var nom_joueur      := ""
+var carnation       := 0
+var coiffure        := 0
+var couleur_cheveux := 0
+var tenue           := 0
 
 # ── Temps ─────────────────────────────────────────────────────
-var heure  : float = 8.0   # 0.0 – 24.0
+var heure  : float = 8.0
 var jour   : int   = 1
-var saison : int   = 0     # 0=Printemps 1=Été 2=Automne 3=Hiver
+var saison : int   = 0
 
 # ── Besoins ───────────────────────────────────────────────────
-var faim : float = 1.0     # 1.0 = rassasié, 0.0 = affamé
+var faim : float = 1.0
 var soif : float = 1.0
 
-# ── Spawn override (transition entre scènes) ──────────────────
+# ── Spawn override ────────────────────────────────────────────
 var spawn_override: Vector2 = Vector2.ZERO
 var spawn_override_actif: bool = false
 
-# ── Ressources ────────────────────────────────────────────────
-var ressources := {
-	"bois":   0,
-	"pierre": 0,
-	"herbes": 0,
-	"baies":  0,
-	"eau":    0,
-	"viande": 0,
-}
+# ── UI State ──────────────────────────────────────────────────
+var inventaire_ouvert := false
+
+# ── Inventaire ────────────────────────────────────────────────
+# Chaque slot : null (vide) ou {"id": String, "qty": int}
+var slots_hotbar:     Array = []
+var slots_inventaire: Array = []
+var slot_actif: int = 0
+
+
+func _ready() -> void:
+	slots_hotbar.resize(TAILLE_HOTBAR)
+	slots_inventaire.resize(TAILLE_INV)
+
+
+# ── Helpers inventaire ────────────────────────────────────────
+
+func item_actif():
+	var s = slots_hotbar[slot_actif]
+	return s if s != null else {}
+
+
+# Ajoute qty unités d'un item. Remplit d'abord les stacks existants,
+# puis crée de nouveaux slots (hotbar en priorité, puis inventaire).
+# Retourne le nombre d'unités non ajoutées (0 si tout est entré).
+func ajouter_item(id: String, qty: int) -> int:
+	var max_stack: int = ITEMS[id]["max_stack"] if ITEMS.has(id) else 64
+	var reste := qty
+
+	# Remplir stacks existants
+	for slots in [slots_hotbar, slots_inventaire]:
+		for s in slots:
+			if reste <= 0: break
+			if s != null and s["id"] == id:
+				var espace: int = max_stack - s["qty"]
+				var ajout: int  = mini(reste, espace)
+				s["qty"] += ajout
+				reste    -= ajout
+
+	# Nouveaux slots
+	for slots in [slots_hotbar, slots_inventaire]:
+		for i in slots.size():
+			if reste <= 0: break
+			if slots[i] == null:
+				var ajout: int = mini(reste, max_stack)
+				slots[i] = {"id": id, "qty": ajout}
+				reste    -= ajout
+
+	return reste
 
 
 # ── Sauvegarde ────────────────────────────────────────────────
@@ -41,6 +94,14 @@ func sauvegarde_existe() -> bool:
 
 
 func sauvegarder() -> void:
+	var hotbar_data: Array = []
+	for s in slots_hotbar:
+		hotbar_data.append({} if s == null else {"id": s["id"], "qty": s["qty"]})
+
+	var inv_data: Array = []
+	for s in slots_inventaire:
+		inv_data.append({} if s == null else {"id": s["id"], "qty": s["qty"]})
+
 	var data := {
 		"nom_village":     nom_village,
 		"nom_joueur":      nom_joueur,
@@ -53,7 +114,9 @@ func sauvegarder() -> void:
 		"saison":          saison,
 		"faim":            faim,
 		"soif":            soif,
-		"ressources":      ressources,
+		"slot_actif":      slot_actif,
+		"slots_hotbar":    hotbar_data,
+		"slots_inventaire": inv_data,
 	}
 	var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -70,6 +133,7 @@ func charger() -> bool:
 	if json.parse(f.get_as_text()) != OK:
 		return false
 	var data: Dictionary = json.get_data()
+
 	nom_village     = data.get("nom_village",     "")
 	nom_joueur      = data.get("nom_joueur",       "")
 	carnation       = data.get("carnation",        0)
@@ -81,8 +145,25 @@ func charger() -> bool:
 	saison          = data.get("saison",           0)
 	faim            = data.get("faim",             1.0)
 	soif            = data.get("soif",             1.0)
-	if data.has("ressources"):
-		for k in data["ressources"]:
-			if ressources.has(k):
-				ressources[k] = data["ressources"][k]
+	slot_actif      = data.get("slot_actif",       0)
+
+	if data.has("slots_hotbar"):
+		var arr: Array = data["slots_hotbar"]
+		for i in mini(arr.size(), TAILLE_HOTBAR):
+			var d: Dictionary = arr[i]
+			slots_hotbar[i] = null if d.is_empty() else {"id": d["id"], "qty": d["qty"]}
+
+	if data.has("slots_inventaire"):
+		var arr: Array = data["slots_inventaire"]
+		for i in mini(arr.size(), TAILLE_INV):
+			var d: Dictionary = arr[i]
+			slots_inventaire[i] = null if d.is_empty() else {"id": d["id"], "qty": d["qty"]}
+
+	# Migration depuis l'ancien format "ressources"
+	if not data.has("slots_hotbar") and data.has("ressources"):
+		var res: Dictionary = data["ressources"]
+		for key in res:
+			if res[key] > 0:
+				ajouter_item(key, res[key])
+
 	return true
