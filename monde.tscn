@@ -1,6 +1,6 @@
 [gd_scene format=4 uid="uid://brawbbvxjy5gm"]
 
-[ext_resource type="Script" uid="uid://nl3dt0hesqwu" path="res://monde.gd" id="1_monde"]
+[ext_resource type="Script" uid="uid://b0k27qvjoke6x" path="res://monde.gd" id="1_monde"]
 [ext_resource type="PackedScene" uid="uid://clcumox054cu2" path="res://Animaux/fox.tscn" id="2_0xm2m"]
 [ext_resource type="Texture2D" uid="uid://cs1s2e7sqodds" path="res://assets/tilemap/gentle_forest/gentle_forest.png" id="2_jq8m5"]
 [ext_resource type="PackedScene" uid="uid://caklmi3j4co2y" path="res://Animaux/boar.tscn" id="3_h2yge"]
@@ -9,10 +9,11 @@
 [ext_resource type="Texture2D" uid="uid://b4h42xbebbymp" path="res://assets/tilemap/Tiles/seasonal_sample_spring.png" id="4_g817v"]
 [ext_resource type="PackedScene" path="res://hud.tscn" id="5_ckny6"]
 [ext_resource type="Texture2D" uid="uid://cjf1omm8g86c2" path="res://assets/tilemap/Tiles/seasonal_sample_summer.png" id="5_h4ouq"]
-[ext_resource type="PackedScene" uid="uid://xnd7uul055l5" path="res://joueur.tscn" id="6_joueur"]
+[ext_resource type="PackedScene" uid="uid://c3qlxcsvgtpmk" path="res://joueur.tscn" id="6_joueur"]
 [ext_resource type="Texture2D" uid="uid://7v7okaekt4uh" path="res://assets/tilemap/Tiles/seasonal_sample_winter.png" id="6_t0510"]
 [ext_resource type="Texture2D" uid="uid://4ehets76kxfn" path="res://assets/tilemap/Tilemap/animatedsample2Copie-ezgif.com-gif-to-sprite-converter.png" id="8_5wftq"]
 [ext_resource type="Texture2D" uid="uid://3pnm1buibnlv" path="res://assets/tilemap/big_Assets/House_1.png" id="9_6xmj5"]
+[ext_resource type="Script" uid="uid://cllodw1y8kj0a" path="res://porte_maison.gd" id="10_porte"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_jq8m5"]
 texture = ExtResource("2_jq8m5")
@@ -2646,9 +2647,8 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_d6m2i"]
-custom_solver_bias = 0.697
-points = PackedVector2Array(-40, 72, 8, 64, 32, 40, 32, 8, 16, -16, -24, -48, -40, -48, -72, -40, -96, -32, -120, -16, -136, 0, -152, 8, -168, 24, -168, 40, -152, 56, -128, 64, -104, 72)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_tn4qm"]
+size = Vector2(23, 26.75)
 
 [node name="Main" type="Node2D" unique_id=498817877]
 script = ExtResource("1_monde")
@@ -2677,7 +2677,8 @@ position = Vector2(400, 900)
 position = Vector2(900, 800)
 
 [node name="Joueur" parent="." unique_id=2056234861 instance=ExtResource("6_joueur")]
-position = Vector2(800, 720)
+y_sort_enabled = true
+position = Vector2(1437, 536)
 
 [node name="HUD" parent="." unique_id=982606077 instance=ExtResource("5_ckny6")]
 
@@ -2702,20 +2703,26 @@ disable_mode = 1
 
 [node name="Maison1" type="Sprite2D" parent="Maison" unique_id=1002780843]
 z_index = 465
-position = Vector2(1485, 382)
+position = Vector2(1484.9999, 376)
 scale = Vector2(1.0133333, 1.0166667)
 texture = ExtResource("9_6xmj5")
 
 [node name="Lantern-mask" type="Sprite2D" parent="Maison" unique_id=1332794163]
 z_index = 4096
-position = Vector2(1405, 382)
+position = Vector2(1405, 380)
 scale = Vector2(1.0133333, 1.0166667)
 texture = ExtResource("9_6xmj5")
 region_enabled = true
 region_rect = Rect2(60.430054, 140.33434, 22.236633, 26.67427)
 
-[node name="CollisionMaison1" type="CollisionShape2D" parent="Maison" unique_id=1006225204]
-z_index = 460
-position = Vector2(1541, 430)
-shape = SubResource("ConvexPolygonShape2D_d6m2i")
-one_way_collision_margin = 0.0
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="Maison" unique_id=1319436389]
+position = Vector2(1573, 445)
+scale = Vector2(2.1702585, 1)
+polygon = PackedVector2Array(0, 1, -5.9900513, 25, -64.04767, 41, -62.20459, 24, -70.03772, 16, -79.71399, 28, -89.851074, 19, -58.057617, -33, -17.50946, -47, -8.7547, -31, -6, 0)
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1835644701]
+script = ExtResource("10_porte")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=784189852]
+position = Vector2(1535, 459)
+shape = SubResource("RectangleShape2D_tn4qm")

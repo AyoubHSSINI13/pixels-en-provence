@@ -1,0 +1,55 @@
+[gd_scene load_steps=5 format=3 uid="uid://dint_maison_pxp"]
+
+[ext_resource type="Script" path="res://interieur_maison.gd" id="1_int"]
+[ext_resource type="PackedScene" uid="uid://c3qlxcsvgtpmk" path="res://joueur.tscn" id="2_joueur"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sortie"]
+size = Vector2(60, 20)
+
+[node name="InterieurMaison" type="Node2D"]
+script = ExtResource("1_int")
+
+[node name="Sol" type="Polygon2D" parent="."]
+color = Color(0.42, 0.3, 0.22, 1)
+polygon = PackedVector2Array(1120, 600, 1440, 600, 1440, 880, 1120, 880)
+
+[node name="MurHaut" type="Polygon2D" parent="."]
+color = Color(0.2, 0.13, 0.09, 1)
+polygon = PackedVector2Array(1120, 600, 1440, 600, 1440, 620, 1120, 620)
+
+[node name="MurGauche" type="Polygon2D" parent="."]
+color = Color(0.2, 0.13, 0.09, 1)
+polygon = PackedVector2Array(1120, 600, 1140, 600, 1140, 880, 1120, 880)
+
+[node name="MurDroit" type="Polygon2D" parent="."]
+color = Color(0.2, 0.13, 0.09, 1)
+polygon = PackedVector2Array(1420, 600, 1440, 600, 1440, 880, 1420, 880)
+
+[node name="MurBasGauche" type="Polygon2D" parent="."]
+color = Color(0.2, 0.13, 0.09, 1)
+polygon = PackedVector2Array(1120, 860, 1250, 860, 1250, 880, 1120, 880)
+
+[node name="MurBasDroit" type="Polygon2D" parent="."]
+color = Color(0.2, 0.13, 0.09, 1)
+polygon = PackedVector2Array(1310, 860, 1440, 860, 1440, 880, 1310, 880)
+
+[node name="Porte" type="Polygon2D" parent="."]
+color = Color(0.55, 0.37, 0.2, 1)
+polygon = PackedVector2Array(1250, 855, 1310, 855, 1310, 880, 1250, 880)
+
+[node name="LabelSortie" type="Label" parent="."]
+offset_left = 1245.0
+offset_top = 825.0
+offset_right = 1315.0
+offset_bottom = 855.0
+text = "Sortie"
+horizontal_alignment = 1
+
+[node name="Sortie" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Sortie"]
+position = Vector2(1280, 865)
+shape = SubResource("RectangleShape2D_sortie")
+
+[node name="Joueur" parent="." instance=ExtResource("2_joueur")]
+position = Vector2(1280, 680)

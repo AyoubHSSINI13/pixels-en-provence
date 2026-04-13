@@ -54,6 +54,16 @@ func _ready() -> void:
 	_build_collision()
 	_update_navigation()
 	_apply_palette_for_hour(GameData.heure)
+	_appliquer_spawn_override()
+
+
+func _appliquer_spawn_override() -> void:
+	if not GameData.spawn_override_actif:
+		return
+	var joueur := get_node_or_null("Joueur") as Node2D
+	if joueur:
+		joueur.global_position = GameData.spawn_override
+	GameData.spawn_override_actif = false
 
 
 func _process(_delta: float) -> void:

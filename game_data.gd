@@ -19,6 +19,10 @@ var saison : int   = 0     # 0=Printemps 1=Été 2=Automne 3=Hiver
 var faim : float = 1.0     # 1.0 = rassasié, 0.0 = affamé
 var soif : float = 1.0
 
+# ── Spawn override (transition entre scènes) ──────────────────
+var spawn_override: Vector2 = Vector2.ZERO
+var spawn_override_actif: bool = false
+
 # ── Ressources ────────────────────────────────────────────────
 var ressources := {
 	"bois":   0,
