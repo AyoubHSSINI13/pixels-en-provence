@@ -350,8 +350,8 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_5v2dv"]
-radius = 8.0
-height = 20.0
+radius = 6.0
+height = 14.0
 
 [node name="Boar" type="CharacterBody2D" unique_id=806238085]
 script = ExtResource("1_bgfw4")

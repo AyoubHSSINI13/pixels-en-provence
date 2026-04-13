@@ -27,6 +27,8 @@ var _inv_panel:       Control # overlay inventaire
 var _curseur_item             # null ou {"id": String, "qty": int}
 var _curseur_ctrl:   Control
 
+var _debug_panel:    Control # overlay debug (F1)
+
 
 # ── Arc jour/nuit ─────────────────────────────────────────────
 
@@ -104,6 +106,7 @@ func _ready() -> void:
 	_build_hotbar(root, fb)
 	_build_inventaire(root, ft, fb)
 	_build_curseur(root, fb)
+	_build_debug(root, fb)
 
 
 # ── Panel perso – haut-gauche ─────────────────────────────────
@@ -687,9 +690,16 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toggle_inventaire()
 			get_viewport().set_input_as_handled()
 
+		KEY_F1:
+			_toggle_debug()
+			get_viewport().set_input_as_handled()
+
 		KEY_ESCAPE:
 			if GameData.inventaire_ouvert:
 				_toggle_inventaire()
+				get_viewport().set_input_as_handled()
+			elif _debug_panel != null and _debug_panel.visible:
+				_toggle_debug()
 				get_viewport().set_input_as_handled()
 
 		KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_8, KEY_9:
@@ -724,3 +734,142 @@ func _font(path: String) -> Font:
 	if ResourceLoader.exists(path):
 		return load(path)
 	return null
+
+
+# ── Panneau Debug (F1) ────────────────────────────────────────
+
+func _build_debug(root: Control, fb: Font) -> void:
+	var p := _pill(Color("#080f08f0"), 10)
+	p.set_anchor(SIDE_LEFT,   1.0); p.set_anchor(SIDE_RIGHT,  1.0)
+	p.set_anchor(SIDE_TOP,    0.5); p.set_anchor(SIDE_BOTTOM, 0.5)
+	p.offset_left = -270; p.offset_right  = -10
+	p.offset_top  = -220; p.offset_bottom =  220
+	p.visible = false
+	root.add_child(p)
+
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 6)
+	vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vb.offset_left = 12; vb.offset_right  = -12
+	vb.offset_top  = 10; vb.offset_bottom = -10
+	p.add_child(vb)
+
+	var titre := Label.new()
+	titre.text = "DEBUG — Ajouter des items"
+	titre.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if fb: titre.add_theme_font_override("font", fb)
+	titre.add_theme_font_size_override("font_size", 13)
+	titre.add_theme_color_override("font_color", Color("#f0d070"))
+	vb.add_child(titre)
+
+	var sep := HSeparator.new()
+	sep.add_theme_color_override("color", Color("#c8922a", 0.35))
+	vb.add_child(sep)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vb.add_child(scroll)
+
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override("separation", 4)
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(list)
+
+	for id in GameData.ITEMS.keys():
+		var info: Dictionary = GameData.ITEMS[id]
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 6)
+		list.add_child(row)
+
+		var pastille := ColorRect.new()
+		pastille.color = info["col"]
+		pastille.custom_minimum_size = Vector2(18, 18)
+		pastille.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(pastille)
+
+		var lbl := Label.new()
+		lbl.text = "%s (%s)" % [info["nom"], info.get("type", "?")]
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if fb: lbl.add_theme_font_override("font", fb)
+		lbl.add_theme_font_size_override("font_size", 11)
+		lbl.add_theme_color_override("font_color", Color("#ffecd2"))
+		row.add_child(lbl)
+
+		var btn1 := _btn_debug("+1", fb)
+		btn1.pressed.connect(func(): _ajouter_debug(id, 1))
+		row.add_child(btn1)
+
+		var btn10 := _btn_debug("+10", fb)
+		btn10.pressed.connect(func(): _ajouter_debug(id, 10))
+		row.add_child(btn10)
+
+	var sep2 := HSeparator.new()
+	sep2.add_theme_color_override("color", Color("#c8922a", 0.22))
+	vb.add_child(sep2)
+
+	var btn_vider := Button.new()
+	btn_vider.text = "Vider l'inventaire"
+	if fb: btn_vider.add_theme_font_override("font", fb)
+	btn_vider.add_theme_font_size_override("font_size", 11)
+	btn_vider.add_theme_color_override("font_color", Color("#ff8060"))
+	var sv := StyleBoxFlat.new()
+	sv.bg_color = Color("#3a1010")
+	sv.border_color = Color("#c04020"); sv.border_width_left = 1
+	sv.border_width_right = 1; sv.border_width_top = 1; sv.border_width_bottom = 1
+	sv.corner_radius_top_left = 4; sv.corner_radius_top_right = 4
+	sv.corner_radius_bottom_left = 4; sv.corner_radius_bottom_right = 4
+	btn_vider.add_theme_stylebox_override("normal",  sv)
+	btn_vider.add_theme_stylebox_override("hover",   sv)
+	btn_vider.add_theme_stylebox_override("pressed", sv)
+	btn_vider.pressed.connect(_vider_inventaire)
+	vb.add_child(btn_vider)
+
+	var hint := Label.new()
+	hint.text = "[ F1 ] fermer"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if fb: hint.add_theme_font_override("font", fb)
+	hint.add_theme_font_size_override("font_size", 9)
+	hint.add_theme_color_override("font_color", Color("#c8922a", 0.55))
+	vb.add_child(hint)
+
+	_debug_panel = p
+
+
+func _btn_debug(texte: String, fb: Font) -> Button:
+	var b := Button.new()
+	b.text = texte
+	b.custom_minimum_size = Vector2(36, 22)
+	if fb: b.add_theme_font_override("font", fb)
+	b.add_theme_font_size_override("font_size", 10)
+	b.add_theme_color_override("font_color", Color("#ffecd2"))
+	var s := StyleBoxFlat.new()
+	s.bg_color = Color("#1e3010")
+	s.border_color = Color("#5c8030"); s.border_width_left = 1
+	s.border_width_right = 1; s.border_width_top = 1; s.border_width_bottom = 1
+	s.corner_radius_top_left = 4; s.corner_radius_top_right = 4
+	s.corner_radius_bottom_left = 4; s.corner_radius_bottom_right = 4
+	b.add_theme_stylebox_override("normal",  s)
+	b.add_theme_stylebox_override("hover",   s)
+	b.add_theme_stylebox_override("pressed", s)
+	return b
+
+
+func _ajouter_debug(id: String, qty: int) -> void:
+	GameData.ajouter_item(id, qty)
+	_maj_tous_slots()
+
+
+func _vider_inventaire() -> void:
+	for i in GameData.slots_hotbar.size():
+		GameData.slots_hotbar[i] = null
+	for i in GameData.slots_inventaire.size():
+		GameData.slots_inventaire[i] = null
+	_curseur_item = null
+	_maj_tous_slots()
+
+
+func _toggle_debug() -> void:
+	if _debug_panel == null:
+		return
+	_debug_panel.visible = not _debug_panel.visible

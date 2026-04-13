@@ -4,12 +4,10 @@ const SAVE_PATH := "user://save.json"
 
 # ── Définition des objets ──────────────────────────────────────
 const ITEMS := {
-	"bois":   {"nom": "Bois",   "col": Color("#c87830"), "stackable": true,  "max_stack": 64},
-	"pierre": {"nom": "Pierre", "col": Color("#9a9a9a"), "stackable": true,  "max_stack": 64},
-	"herbes": {"nom": "Herbes", "col": Color("#50c040"), "stackable": true,  "max_stack": 64},
-	"baies":  {"nom": "Baies",  "col": Color("#d040d0"), "stackable": true,  "max_stack": 64},
-	"eau":    {"nom": "Eau",    "col": Color("#30a0f0"), "stackable": true,  "max_stack": 64},
-	"viande": {"nom": "Viande", "col": Color("#e04040"), "stackable": true,  "max_stack": 64},
+	"bois":   {"nom": "Bois",   "col": Color("#c87830"), "stackable": true,  "max_stack": 64, "type": "ressource"},
+	"pierre": {"nom": "Pierre", "col": Color("#9a9a9a"), "stackable": true,  "max_stack": 64, "type": "ressource"},
+	"hache":  {"nom": "Hache",  "col": Color("#a05020"), "stackable": false, "max_stack": 1,  "type": "outil", "arme_sprite": "ax01"},
+	"epee":   {"nom": "Épée",   "col": Color("#c0c8e0"), "stackable": false, "max_stack": 1,  "type": "outil", "arme_sprite": "sw01"},
 }
 
 const TAILLE_HOTBAR := 9

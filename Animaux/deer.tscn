@@ -379,7 +379,8 @@ animations = [{
 }]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_h2qwi"]
-height = 20.0
+radius = 7.0
+height = 14.0
 
 [node name="Deer" type="CharacterBody2D" unique_id=1270512904]
 script = ExtResource("1_e7w85")
