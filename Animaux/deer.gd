@@ -8,6 +8,8 @@ var is_selected: bool = false
 var target_position: Vector2
 
 func _ready() -> void:
+	collision_layer = 2
+	collision_mask  = 1
 	target_position = global_position
 
 func _input(event: InputEvent) -> void:

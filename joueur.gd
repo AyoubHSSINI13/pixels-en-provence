@@ -36,6 +36,8 @@ var _attaque_en_cours := false
 
 
 func _ready() -> void:
+	collision_layer = 1
+	collision_mask  = 1   # Uniquement le monde, pas les animaux (couche 2)
 	_creer_sprites()
 	_ajouter_camera()
 	z_as_relative = false

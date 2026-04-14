@@ -11,6 +11,8 @@ var target_position: Vector2
 static var selected_animal: CharacterBody2D = null
 
 func _ready() -> void:
+	collision_layer = 2
+	collision_mask  = 1
 	target_position = global_position
 
 func _input(event: InputEvent) -> void:
@@ -69,7 +71,7 @@ func _play_animation(direction: Vector2) -> void:
 	var sprite = $AnimatedSprite2D
 	if abs(direction.x) >= abs(direction.y):
 		sprite.flip_h = direction.x < 0
-		sprite.play("run ")
+		sprite.play("run")
 	elif direction.y < 0:
 		sprite.flip_h = false
 		sprite.play("run up")
