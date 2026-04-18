@@ -92,7 +92,8 @@ func _apply_palette_for_hour(h: float) -> void:
 	var tex_waterfall: Texture2D = load(waterfall)
 	for src in _atlas_sources:
 		var path := src.texture.resource_path
-		if "gentle_forest" in path:
+		var filename := path.get_file()
+		if filename.begins_with("gentle_forest"):
 			src.texture = tex_palette
 		elif "waterfall" in path:
 			src.texture = tex_waterfall
